@@ -7,8 +7,13 @@ import com.github.britooo.looca.api.core.Looca;
 import com.github.britooo.looca.api.group.discos.Disco;
 import com.github.britooo.looca.api.group.discos.DiscoGrupo;
 import com.github.britooo.looca.api.group.memoria.Memoria;
+import com.github.britooo.looca.api.group.processador.Processador;
 import com.github.britooo.looca.api.group.processos.Processo;
 import com.github.britooo.looca.api.group.processos.ProcessoGrupo;
+import com.github.britooo.looca.api.group.rede.Rede;
+import com.github.britooo.looca.api.group.rede.RedeInterface;
+import com.github.britooo.looca.api.group.rede.RedeInterfaceGroup;
+import com.github.britooo.looca.api.group.rede.RedeParametros;
 import com.github.britooo.looca.api.group.sistema.Sistema;
 import java.util.List;
 
@@ -36,7 +41,7 @@ public class TentativaLoocaApi {
         System.out.println(memoria);
         
         DiscoGrupo grupoDeDiscos = looca.getGrupoDeDiscos();
-        List<Disco> discos = grupoDeDiscos.getDiscos();
+        List<Disco> discos = grupoDeDiscos.getDiscos(); 
         for(Disco disco:discos){
             System.out.println(disco);
         }
@@ -46,6 +51,21 @@ public class TentativaLoocaApi {
         for(Processo processo : processos){
             System.out.println(processo);
         }
+        
+        Processador processador = looca.getProcessador();
+        System.out.println(processador);
+        
+        Rede rede = looca.getRede();
+        RedeParametros redeParametros = rede.getParametros();
+        System.out.println(redeParametros);
+        
+        RedeInterfaceGroup gruposDeInterface=rede.getGrupoDeInterfaces();
+        List<RedeInterface> interfaces = gruposDeInterface.getInterfaces();
+        for(RedeInterface redeInterface: interfaces ){
+            System.out.println(redeInterface);
+        }
+        
+        
         
     }
 }
