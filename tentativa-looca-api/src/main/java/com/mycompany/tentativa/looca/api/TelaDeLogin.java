@@ -4,12 +4,15 @@
  */
 package com.mycompany.tentativa.looca.api;
 
+import org.springframework.jdbc.core.JdbcTemplate;
+
 /**
  *
  * @author daniel
  */
 public class TelaDeLogin extends javax.swing.JFrame {
-
+     Conexao conexao = new Conexao();
+    JdbcTemplate con = conexao.getConexaoDoBanco();
     /**
      * Creates new form TelaDeLogin
      */
@@ -137,6 +140,7 @@ public class TelaDeLogin extends javax.swing.JFrame {
 
     private void buttonLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLoginActionPerformed
         // TODO add your handling code here:
+        con.execute(String.format("select username,senha from usuario where username='%s' and senha = '%s'",inputUsername,inputPassword));
     }//GEN-LAST:event_buttonLoginActionPerformed
 
     /**
