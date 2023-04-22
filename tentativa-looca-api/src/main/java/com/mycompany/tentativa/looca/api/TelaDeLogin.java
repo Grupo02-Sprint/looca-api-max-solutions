@@ -4,6 +4,7 @@
  */
 package com.mycompany.tentativa.looca.api;
 
+import javax.swing.JOptionPane;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
@@ -11,8 +12,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
  * @author daniel
  */
 public class TelaDeLogin extends javax.swing.JFrame {
-     Conexao conexao = new Conexao();
+
+    Conexao conexao = new Conexao();
     JdbcTemplate con = conexao.getConexaoDoBanco();
+    
+
     /**
      * Creates new form TelaDeLogin
      */
@@ -140,7 +144,11 @@ public class TelaDeLogin extends javax.swing.JFrame {
 
     private void buttonLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLoginActionPerformed
         // TODO add your handling code here:
-        con.execute(String.format("select username,senha from usuario where username='%s' and senha = '%s'",inputUsername,inputPassword));
+
+        con.execute(String.format("select username,senha from usuario where username='%s' and senha = '%s'", inputUsername.toString(), inputPassword.toString()));
+        if (!inputUsername.equals("") && !inputPassword.equals("")) {
+            JOptionPane("Cadastrando máquina do usuário");
+       }
     }//GEN-LAST:event_buttonLoginActionPerformed
 
     /**
@@ -188,4 +196,8 @@ public class TelaDeLogin extends javax.swing.JFrame {
     private javax.swing.JLabel lblTitulo;
     private javax.swing.JLabel lblUsername;
     // End of variables declaration//GEN-END:variables
+
+    private void JOptionPane(String string) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
 }
