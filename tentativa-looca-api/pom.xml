@@ -23,7 +23,7 @@
                     </descriptorRefs>
                     <archive>
                         <manifest>
-                            <mainClass>src.main.java.com.mycompany.tentativa.looca.api.TelaDeLogin</mainClass>
+                            <mainClass>src.main.java.com.mycompany.looca.api.TelaDeLogin</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
@@ -58,15 +58,12 @@
             <artifactId>commons-dbcp2</artifactId>
             <version>2.5.0</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
-        <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-            <version>8.0.33</version>
+       <!-- https://mvnrepository.com/artifact/com.microsoft.sqlserver/mssql-jdbc -->
+         <dependency>
+           <groupId>com.microsoft.sqlserver</groupId>
+            <artifactId>mssql-jdbc</artifactId>
+            <version>12.2.0.jre11</version>
         </dependency>
-
-      
-
     </dependencies>
     <name>looca-api</name>
 </project>

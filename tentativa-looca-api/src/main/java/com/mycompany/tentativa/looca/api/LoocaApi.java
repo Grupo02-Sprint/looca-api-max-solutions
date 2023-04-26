@@ -6,6 +6,8 @@ package com.mycompany.tentativa.looca.api;
 import com.github.britooo.looca.api.core.Looca;
 import com.github.britooo.looca.api.group.discos.Disco;
 import com.github.britooo.looca.api.group.discos.DiscoGrupo;
+import com.github.britooo.looca.api.group.janelas.Janela;
+import com.github.britooo.looca.api.group.janelas.JanelaGrupo;
 import com.github.britooo.looca.api.group.memoria.Memoria;
 import com.github.britooo.looca.api.group.processador.Processador;
 import com.github.britooo.looca.api.group.processos.Processo;
@@ -23,9 +25,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
  * @author Cesar
  */
 public class LoocaApi {
-
-    public static void main(String[] args) {
-
+   public void demonstraLooca(){
+       
         Looca looca = new Looca();
         Conexao conexao = new Conexao();
         JdbcTemplate con = conexao.getConexaoDoBanco();
@@ -39,12 +40,14 @@ public class LoocaApi {
 
         System.out.println(sistema);
 
-        con.update(String.format("insert into maquina (permissao,fabricante,arquitetura,inicializacao,sistema_operacional) values ('%s','%s','%s','%s','%s')",
+        con.update(String.format("insert into maquina (permissao,fabricante,arquitetura,inicializacao,sistema_operacional)"
+                + " values ('%s','%s','%s','%s','%s')",
                 sistema.getPermissao().toString(),
                 sistema.getFabricante(),
                 sistema.getArquitetura().toString(),
                 sistema.getInicializado().toString(),
-                sistema.getSistemaOperacional())
+                sistema.getSistemaOperacional()
+                )
         );
 
         Memoria memoria = looca.getMemoria();
@@ -81,5 +84,19 @@ public class LoocaApi {
         for (RedeInterface redeInterface : interfaces) {
             System.out.println(redeInterface);
         }
+        
+       JanelaGrupo gruposDeJanela = looca.getGrupoDeJanelas();
+       List<Janela> janelas = gruposDeJanela.getJanelas();
+       List<Janela> janelasVisiveis = gruposDeJanela.getJanelasVisiveis();
+       
+        for (Janela janela : janelas) {
+           System.out.println(janela);
+       }
+       
+       for (Janela janelaVisivel : janelasVisiveis) {
+           System.out.println(janelaVisivel);
+       }
+               
     }
-}
+   }
+
