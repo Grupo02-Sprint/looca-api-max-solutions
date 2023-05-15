@@ -29,7 +29,9 @@ public class LoocaApi {
        
         Looca looca = new Looca();
         Conexao conexao = new Conexao();
+        ConexaoLocal conexaoLocal = new ConexaoLocal();
         JdbcTemplate con = conexao.getConexaoDoBanco();
+        JdbcTemplate conLocal = conexaoLocal.getConexaoDoBancoLocal();
         Sistema sistema = looca.getSistema();
 
         sistema.getPermissao();
@@ -40,15 +42,7 @@ public class LoocaApi {
 
         System.out.println(sistema);
 
-        con.update(String.format("insert into maquina (permissao,fabricante,arquitetura,inicializacao,sistema_operacional)"
-                + " values ('%s','%s','%s','%s','%s')",
-                sistema.getPermissao().toString(),
-                sistema.getFabricante(),
-                sistema.getArquitetura().toString(),
-                sistema.getInicializado().toString(),
-                sistema.getSistemaOperacional()
-                )
-        );
+
 
         Memoria memoria = looca.getMemoria();
 
@@ -58,7 +52,8 @@ public class LoocaApi {
 
         List<Disco> discos = grupoDeDiscos.getDiscos();
         for (Disco disco : discos) {
-            System.out.println(disco);
+           
+           System.out.println(disco);
         }
 
         ProcessoGrupo grupoDeProcesso = looca.getGrupoDeProcessos();
@@ -66,6 +61,8 @@ public class LoocaApi {
         List<Processo> processos = grupoDeProcesso.getProcessos();
 
         for (Processo processo : processos) {
+           conLocal.update(String.format("Insert into processo (pidProcesso,usoCpu,usoMemoria) values"
+                   + " ('%d','%.2f','%.2f');",processo.getPid(), processo.getUsoCpu(),processo.getUsoMemoria()));
             System.out.println(processo);
         }
 

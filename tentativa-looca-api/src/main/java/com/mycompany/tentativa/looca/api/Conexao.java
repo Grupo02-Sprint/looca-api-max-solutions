@@ -21,10 +21,7 @@ public class Conexao {
 
     public Conexao() {
         BasicDataSource dataSource = new BasicDataSource();
-       // dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
-        // dataSource.setUrl("jdbc:mysql://localhost:3306/maxsolutions"); // trocar o localhost:3306 pelo endereço do banco e o tecflix pelo nome do banco
-        //dataSource.setUsername("root"); //Usuario do banco
-        //dataSource.setPassword("Sccp1910@"); //Senha do banco
+      
              dataSource.setDriverClassName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
 
              dataSource.setUrl("jdbc:sqlserver://Sprint2Semestre.database.windows.net:1433;database=max-solutions;user=admin-max-solutions;password={#Gfgrupo2};encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;");
@@ -36,7 +33,7 @@ public class Conexao {
     public JdbcTemplate getConexaoDoBanco() {
         return conexaoDoBanco;
     }
-
+    
      public Connection conectaBD() {
         Connection conn = null;
 
