@@ -3,6 +3,8 @@
  */
 package com.mycompany.tentativa.looca.api;
 
+import com.mycompany.tentativa.looca.api.conexao.ConexaoLocal;
+import com.mycompany.tentativa.looca.api.conexao.Conexao;
 import com.github.britooo.looca.api.core.Looca;
 import com.github.britooo.looca.api.group.discos.Disco;
 import com.github.britooo.looca.api.group.discos.DiscoGrupo;
@@ -17,6 +19,8 @@ import com.github.britooo.looca.api.group.rede.RedeInterface;
 import com.github.britooo.looca.api.group.rede.RedeInterfaceGroup;
 import com.github.britooo.looca.api.group.rede.RedeParametros;
 import com.github.britooo.looca.api.group.sistema.Sistema;
+import com.mycompany.tentativa.looca.api.conexao.Maquina;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -25,8 +29,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
  * @author Cesar
  */
 public class LoocaApi {
-   public void demonstraLooca(){
-       
+   public void demonstraLooca(Maquina m){
+       LocalDateTime dataHoraAtual = LocalDateTime.now();
         Looca looca = new Looca();
         Conexao conexao = new Conexao();
         ConexaoLocal conexaoLocal = new ConexaoLocal();
@@ -60,10 +64,10 @@ public class LoocaApi {
 
         List<Processo> processos = grupoDeProcesso.getProcessos();
 
-        for (Processo processo : processos) {
-           conLocal.update(String.format("Insert into processo (pidProcesso,usoCpu,usoMemoria) values"
-                   + " ('%d','%.2f','%.2f');",processo.getPid(), processo.getUsoCpu(),processo.getUsoMemoria()));
-            System.out.println(processo);
+        for (int i = 0 ; i<25 ; i++) {
+           conLocal.update(String.format("Insert into processo2 (pidProcesso,dtHora,usoCpu,usoMemoria) values"
+                   + " ('%d','%s','%.0f','%.0f');",processos.get(i).getPid(),dataHoraAtual ,processos.get(i).getUsoCpu(),processos.get(i).getUsoMemoria()));
+            System.out.println(processos);
         }
 
         Processador processador = looca.getProcessador();
