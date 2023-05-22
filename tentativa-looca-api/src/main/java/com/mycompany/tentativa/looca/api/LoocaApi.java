@@ -23,20 +23,26 @@ import com.mycompany.tentativa.looca.api.conexao.Maquina;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.jdbc.core.JdbcTemplate;
+import java.text.DecimalFormat;
+import java.time.format.DateTimeFormatter;
 
 /**
  *
  * @author Cesar
  */
 public class LoocaApi {
-   public void demonstraLooca(Maquina m){
-       LocalDateTime dataHoraAtual = LocalDateTime.now();
+
+    public void demonstraLooca(Maquina m) {
+        LocalDateTime dataHoraAtual = LocalDateTime.now();
         Looca looca = new Looca();
         Conexao conexao = new Conexao();
         ConexaoLocal conexaoLocal = new ConexaoLocal();
         JdbcTemplate con = conexao.getConexaoDoBanco();
         JdbcTemplate conLocal = conexaoLocal.getConexaoDoBancoLocal();
         Sistema sistema = looca.getSistema();
+        DecimalFormat df = new DecimalFormat("0.00s");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String formattedDateTime = dataHoraAtual.format(formatter);
 
         sistema.getPermissao();
         sistema.getFabricante();
@@ -46,33 +52,50 @@ public class LoocaApi {
 
         System.out.println(sistema);
 
-
-
         Memoria memoria = looca.getMemoria();
 
         System.out.println(memoria);
 
         DiscoGrupo grupoDeDiscos = looca.getGrupoDeDiscos();
 
+        Integer discoCadastrado = 0;
         List<Disco> discos = grupoDeDiscos.getDiscos();
         for (Disco disco : discos) {
-           
-           System.out.println(disco);
+
+            System.out.println(disco.getTamanho());
+
+            if (discoCadastrado < 1) {
+                con.update(String.format("INSERT INTO especificacao (fk_maquina,fk_loja,fk_componente,data_ativacao_componente,capacidade) "
+                        + "values (%d,%d,%d,'%s',%d)", m.getIdMaquina(), m.getFkEmpresa(), 3, formattedDateTime, disco.getTamanho()/10000000));
+                discoCadastrado++;
+            }
         }
+        Processador processador = looca.getProcessador();
+
+        System.out.println(processador);
+
+        con.update(String.format("INSERT INTO especificacao (fk_maquina,fk_loja,fk_componente,data_ativacao_componente,capacidade) "
+                + "values (%d,%d,%d,'%s',%d)", m.getIdMaquina(), m.getFkEmpresa(), 1, formattedDateTime, memoria.getTotal()/10000000));
+
+        con.update(String.format("INSERT INTO especificacao (fk_maquina,fk_loja,fk_componente,data_ativacao_componente,capacidade) "
+                + "values (%d,%d,%d,'%s',%d)", m.getIdMaquina(), m.getFkEmpresa(), 2, formattedDateTime, processador.getFrequencia()/10000000));
 
         ProcessoGrupo grupoDeProcesso = looca.getGrupoDeProcessos();
 
         List<Processo> processos = grupoDeProcesso.getProcessos();
 
-        for (int i = 0 ; i<25 ; i++) {
-           conLocal.update(String.format("Insert into processo2 (pidProcesso,dtHora,usoCpu,usoMemoria) values"
-                   + " ('%d','%s','%.0f','%.0f');",processos.get(i).getPid(),dataHoraAtual ,processos.get(i).getUsoCpu(),processos.get(i).getUsoMemoria()));
-            System.out.println(processos);
+        Double totalUsoCpu = 0.0;
+        Double totalUsoMemoria = 0.0;
+
+        for (Processo processo : processos) {
+//           conLocal.update(String.format("Insert into processo2 (pidProcesso,dtHora,usoCpu,usoMemoria) values"
+//                   + " ('%d','%s','%s','%s');",processo.getPid(),dataHoraAtual, df.format(processo.getUsoCpu()),df.format(processo.getUsoMemoria()))); //NOI18N
+            System.out.println(processo);
+            totalUsoCpu += processo.getUsoCpu();
+            totalUsoMemoria += processo.getUsoMemoria();
         }
 
-        Processador processador = looca.getProcessador();
-
-        System.out.println(processador);
+        System.out.println(String.format("Uso cpu: %.2f  \nTotal uso Memoria: %.2f", totalUsoCpu, totalUsoMemoria));
 
         Rede rede = looca.getRede();
 
@@ -83,21 +106,22 @@ public class LoocaApi {
         RedeInterfaceGroup gruposDeInterface = rede.getGrupoDeInterfaces();
         List<RedeInterface> interfaces = gruposDeInterface.getInterfaces();
         for (RedeInterface redeInterface : interfaces) {
+            con.update(String.format("Insert into rede (bytes_enviados, bytes_recebidos,nome) values (%d,%d,'%s');",
+                    redeInterface.getBytesEnviados(), redeInterface.getBytesEnviados(), redeInterface.getNomeExibicao()));
             System.out.println(redeInterface);
         }
-        
-       JanelaGrupo gruposDeJanela = looca.getGrupoDeJanelas();
-       List<Janela> janelas = gruposDeJanela.getJanelas();
-       List<Janela> janelasVisiveis = gruposDeJanela.getJanelasVisiveis();
-       
-        for (Janela janela : janelas) {
-           System.out.println(janela);
-       }
-       
-       for (Janela janelaVisivel : janelasVisiveis) {
-           System.out.println(janelaVisivel);
-       }
-               
-    }
-   }
 
+        JanelaGrupo gruposDeJanela = looca.getGrupoDeJanelas();
+        List<Janela> janelas = gruposDeJanela.getJanelas();
+        List<Janela> janelasVisiveis = gruposDeJanela.getJanelasVisiveis();
+
+        for (Janela janela : janelas) {
+            System.out.println(janela);
+        }
+
+        for (Janela janelaVisivel : janelasVisiveis) {
+            System.out.println(janelaVisivel);
+        }
+
+    }
+}

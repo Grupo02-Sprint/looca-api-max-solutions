@@ -12,6 +12,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.ImageIcon;
+import javax.swing.JOptionPane;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
@@ -29,6 +31,7 @@ public class TelaDeLogin extends javax.swing.JFrame {
      */
     public TelaDeLogin() {
         initComponents();
+        this.setIconImage(new ImageIcon(getClass().getResource("/assets/logo.png")).getImage());
     }
 
     /**
@@ -150,7 +153,7 @@ public class TelaDeLogin extends javax.swing.JFrame {
 
         
         try {
-
+            
             String patrimonio_maquina = inputPatrimonio.getText();
             String senha_maquina = inputPassword.getText();
 
@@ -160,11 +163,15 @@ public class TelaDeLogin extends javax.swing.JFrame {
             ResultSet result = objUsuarioDAO.usuarioEntra(maquina);
 
             if (result.next()) {
-                
+                JOptionPane.showMessageDialog(null, "Bem vindo!",
+                        "Login reallizado com Sucesso", JOptionPane.INFORMATION_MESSAGE);
                 maquina.setFkEmpresa(result.getInt("id_loja"));
                 maquina.setIdMaquina(result.getInt("id_maquina"));
                 
                loocaApiMaxSolutions.demonstraLooca(maquina);
+            } else {
+                JOptionPane.showMessageDialog(null, "Falha no login!",
+                        "Tente novamente", JOptionPane.INFORMATION_MESSAGE);
             }
         } catch (SQLException ex) {
             Logger.getLogger(TelaDeLogin.class.getName()).log(Level.SEVERE, null, ex);
