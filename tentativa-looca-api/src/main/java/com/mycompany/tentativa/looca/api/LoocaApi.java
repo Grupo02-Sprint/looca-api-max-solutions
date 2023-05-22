@@ -25,6 +25,8 @@ import java.util.List;
 import org.springframework.jdbc.core.JdbcTemplate;
 import java.text.DecimalFormat;
 import java.time.format.DateTimeFormatter;
+import java.util.TimerTask;
+import javax.swing.Timer;
 
 /**
  *
@@ -84,18 +86,11 @@ public class LoocaApi {
 
         List<Processo> processos = grupoDeProcesso.getProcessos();
 
-        Double totalUsoCpu = 0.0;
-        Double totalUsoMemoria = 0.0;
-
         for (Processo processo : processos) {
-//           conLocal.update(String.format("Insert into processo2 (pidProcesso,dtHora,usoCpu,usoMemoria) values"
+//         conLocal.update(String.format("Insert into processo (pidProcesso,dtHora,usoCpu,usoMemoria) values"
 //                   + " ('%d','%s','%s','%s');",processo.getPid(),dataHoraAtual, df.format(processo.getUsoCpu()),df.format(processo.getUsoMemoria()))); //NOI18N
             System.out.println(processo);
-            totalUsoCpu += processo.getUsoCpu();
-            totalUsoMemoria += processo.getUsoMemoria();
-        }
-
-        System.out.println(String.format("Uso cpu: %.2f  \nTotal uso Memoria: %.2f", totalUsoCpu, totalUsoMemoria));
+            }
 
         Rede rede = looca.getRede();
 
@@ -107,6 +102,8 @@ public class LoocaApi {
         List<RedeInterface> interfaces = gruposDeInterface.getInterfaces();
         for (RedeInterface redeInterface : interfaces) {
             con.update(String.format("Insert into rede (bytes_enviados, bytes_recebidos,nome) values (%d,%d,'%s');",
+                    redeInterface.getBytesEnviados(), redeInterface.getBytesEnviados(), redeInterface.getNomeExibicao()));
+            conLocal.update(String.format("Insert into rede (bytes_enviados, bytes_recebidos,nome) values (%d,%d,'%s');",
                     redeInterface.getBytesEnviados(), redeInterface.getBytesEnviados(), redeInterface.getNomeExibicao()));
             System.out.println(redeInterface);
         }
@@ -120,7 +117,7 @@ public class LoocaApi {
         }
 
         for (Janela janelaVisivel : janelasVisiveis) {
-            System.out.println(janelaVisivel);
+            System.out.println(janelaVisivel);  
         }
 
     }

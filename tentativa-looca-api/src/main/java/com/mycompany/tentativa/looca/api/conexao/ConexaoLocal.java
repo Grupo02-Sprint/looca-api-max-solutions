@@ -18,7 +18,7 @@ public class ConexaoLocal {
     public ConexaoLocal() {
         BasicDataSource dataSource2 = new BasicDataSource();
         dataSource2.setDriverClassName("com.mysql.cj.jdbc.Driver");
-        dataSource2.setUrl("jdbc:mysql://127.0.0.1:3306/banco1"); // trocar o localhost:3306 pelo endereço do banco e o tecflix pelo nome do banco
+        dataSource2.setUrl("jdbc:mysql://127.0.0.1:3306/banco"); // trocar o localhost:3306 pelo endereço do banco e o tecflix pelo nome do banco
         dataSource2.setUsername("root"); //Usuario do banco
         dataSource2.setPassword("Sccp1910@"); //Senha do banco
 
