@@ -83,7 +83,7 @@ public class LoocaApi {
         JdbcTemplate con = conexao.getConexaoDoBanco();
         JdbcTemplate conLocal = conexaoLocal.getConexaoDoBancoLocal();
         Sistema sistema = looca.getSistema();
-        DecimalFormat df = new DecimalFormat("0.00s");
+        DecimalFormat df = new DecimalFormat("0.00");
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         String formattedDateTime = dataHoraAtual.format(formatter);
 
@@ -177,12 +177,26 @@ public class LoocaApi {
         }
 
         new java.util.Timer().scheduleAtFixedRate(new TimerTask() {
+
             @Override
             public void run() {
-//             con.update(String.format("insert into metrica "
-//                     + "(captura,dt_hora_captura,fk_maquina,fk_loja,fk_componente,fk_unidade_medida)"
-//                     + "values(%d,'%s',%d,%d,%d,%d)"));
-                System.out.println(memoria.getDisponivel() / 1000000);
+                //Porcentagem de uso da memória
+                Double porcentagemUsoMemoria = (memoria.getEmUso().doubleValue() / memoria.getTotal().doubleValue()) * 100.0;
+                //Definindo novamente o localDateTime
+                LocalDateTime dataHoraAtual = LocalDateTime.now();
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                
+                String formattedDateTime = dataHoraAtual.format(formatter);
+                con.update("insert into metrica "
+                        + "(captura,dt_hora_captura,fk_maquina,fk_loja,fk_componente,fk_unidade_medida)"
+                        + "values(?,?,?,?,?,?)", porcentagemUsoMemoria,
+                        formattedDateTime,
+                        m.getIdMaquina(),
+                        m.getFkEmpresa(),
+                        1,
+                        4);
+
+                System.out.println(porcentagemUsoMemoria);
             }
         }, 0, 5000);
     }
