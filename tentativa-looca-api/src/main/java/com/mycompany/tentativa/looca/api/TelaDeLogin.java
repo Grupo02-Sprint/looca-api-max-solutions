@@ -151,9 +151,8 @@ public class TelaDeLogin extends javax.swing.JFrame {
     private void buttonLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLoginActionPerformed
         // TODO add your handling code here:
 
-        
         try {
-            
+
             String patrimonio_maquina = inputPatrimonio.getText();
             String senha_maquina = inputPassword.getText();
 
@@ -164,11 +163,11 @@ public class TelaDeLogin extends javax.swing.JFrame {
 
             if (result.next()) {
                 JOptionPane.showMessageDialog(null, "Bem vindo!",
-                        "Login reallizado com Sucesso", JOptionPane.INFORMATION_MESSAGE);
+                        "Login reallizado com sucesso", JOptionPane.INFORMATION_MESSAGE);
                 maquina.setFkEmpresa(result.getInt("id_loja"));
                 maquina.setIdMaquina(result.getInt("id_maquina"));
-                
-               loocaApiMaxSolutions.demonstraLooca(maquina);
+
+                loocaApiMaxSolutions.demonstraLooca(maquina);
             } else {
                 JOptionPane.showMessageDialog(null, "Falha no login!",
                         "Tente novamente", JOptionPane.INFORMATION_MESSAGE);
