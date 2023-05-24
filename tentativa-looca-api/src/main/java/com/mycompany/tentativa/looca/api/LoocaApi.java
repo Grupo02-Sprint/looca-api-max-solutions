@@ -20,6 +20,7 @@ import com.github.britooo.looca.api.group.rede.RedeInterfaceGroup;
 import com.github.britooo.looca.api.group.rede.RedeParametros;
 import com.github.britooo.looca.api.group.sistema.Sistema;
 import com.mycompany.tentativa.looca.api.conexao.Maquina;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -114,35 +115,36 @@ public class LoocaApi {
         //System.out.println(sistema);
         // System.out.println(memoria);
 
-        Integer discoCadastrado = 0;
-
         for (Disco disco : discos) {
+            Double tamanhoDisco = disco.getTamanho().doubleValue() / (1024 * 1024 * 1024);
             // Verificar se já existem dados da fk_maquina na tabela especificacao
             if (!existeDadosFKMaquina(m.getIdMaquina(), 3, conexao.conectaBD())) {
-                con.update(String.format("INSERT INTO especificacao (fk_maquina,fk_loja,fk_componente,data_ativacao_componente,capacidade) "
-                        + "values (%d,%d,3,'%s',%d)", m.getIdMaquina(), m.getFkEmpresa(), formattedDateTime, disco.getTamanho() / 10000000));
+                con.update("INSERT INTO especificacao (fk_maquina,fk_loja,fk_componente,data_ativacao_componente,capacidade) "
+                        + "values (?,?,?,?,?)", m.getIdMaquina(), m.getFkEmpresa(), formattedDateTime, tamanhoDisco);
             } else {
-                con.update(String.format("update especificacao set capacidade= %d where fk_maquina = %d and fk_componente = 3",
-                        disco.getTamanho() / 10000000, m.getIdMaquina()));
+                con.update("update especificacao set capacidade= ? where fk_maquina = ? and fk_componente = ?",
+                        tamanhoDisco, m.getIdMaquina(), 3);
             }
         }
 
+        Double tamanhoMemoria = memoria.getTotal().doubleValue() / (1024 * 1024 * 1024);
         if (!existeDadosFKMaquina(m.getIdMaquina(), 1, conexao.conectaBD())) {
             con.update("INSERT INTO especificacao (fk_maquina, fk_loja, fk_componente, data_ativacao_componente, capacidade) "
                     + "VALUES (?, ?, ?, ?, ?)",
-                    m.getIdMaquina(), m.getFkEmpresa(), 1, formattedDateTime, memoria.getTotal() / 10000000);
+                    m.getIdMaquina(), m.getFkEmpresa(), 1, formattedDateTime, tamanhoMemoria);
         } else {
             con.update("UPDATE especificacao SET capacidade = ? WHERE fk_maquina = ? AND fk_componente = ?",
-                    memoria.getTotal() / 10000000, m.getIdMaquina(), 1);
+                    tamanhoMemoria, m.getIdMaquina(), 1);
         }
 
+        Double frequenciaGigaHertz = processador.getFrequencia() / 1000000000.0;
         if (!existeDadosFKMaquina(m.getIdMaquina(), 2, conexao.conectaBD())) {
             con.update("INSERT INTO especificacao (fk_maquina, fk_loja, fk_componente, data_ativacao_componente, capacidade) "
                     + "VALUES (?, ?, ?, ?, ?)",
-                    m.getIdMaquina(), m.getFkEmpresa(), 2, formattedDateTime, memoria.getTotal() / 10000000);
+                    m.getIdMaquina() / 100000000, m.getFkEmpresa(), 2, formattedDateTime, frequenciaGigaHertz);
         } else {
             con.update("UPDATE especificacao SET capacidade = ? WHERE fk_maquina = ? AND fk_componente = ?",
-                    memoria.getTotal() / 10000000, m.getIdMaquina(), 2);
+                    frequenciaGigaHertz, m.getIdMaquina(), 2);
         }
 
         for (Processo processo : processos) {
@@ -185,19 +187,70 @@ public class LoocaApi {
                 //Definindo novamente o localDateTime
                 LocalDateTime dataHoraAtual = LocalDateTime.now();
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-                
                 String formattedDateTime = dataHoraAtual.format(formatter);
                 con.update("insert into metrica "
                         + "(captura,dt_hora_captura,fk_maquina,fk_loja,fk_componente,fk_unidade_medida)"
-                        + "values(?,?,?,?,?,?)", porcentagemUsoMemoria,
+                        + "values(?,?,?,?,?,?)",
+                        porcentagemUsoMemoria,
                         formattedDateTime,
                         m.getIdMaquina(),
                         m.getFkEmpresa(),
                         1,
                         4);
 
-                System.out.println(porcentagemUsoMemoria);
+                con.update("insert into metrica "
+                        + "(captura,dt_hora_captura,fk_maquina,fk_loja,fk_componente,fk_unidade_medida)"
+                        + "values(?,?,?,?,?,?)",
+                        processador.getUso(),
+                        formattedDateTime,
+                        m.getIdMaquina(),
+                        m.getFkEmpresa(),
+                        2,
+                        4);
+                for (Disco disco : discos) {
+                    con.update("insert into metrica "
+                            + "(captura,dt_hora_captura,fk_maquina,fk_loja,fk_componente,fk_unidade_medida)"
+                            + "values(?,?,?,?,?,?)",
+                            disco.getTempoDeTransferencia(),
+                            formattedDateTime,
+                            m.getIdMaquina(),
+                            m.getFkEmpresa(),
+                            3,
+                            4);
+                    System.out.println("Tempo de transferência: " + disco.getTempoDeTransferencia());
+                }
+//                if (porcentagemUsoMemoria > 80.0) {
+//                    for (Processo processo : processos) {
+//                        int pid = processo.getPid();
+//                        if (pid > 1000) {
+//                            try {
+//                                // Converte o PID para uma string
+//                                String pidString = Integer.toString(pid);
+//
+//                                // Executa o comando "kill" para encerrar o processo pelo seu PID
+//                                ProcessBuilder processBuilder = new ProcessBuilder("kill -9", pidString);
+//                                Process process = processBuilder.start();
+//
+//                                // Verifica o código de saída do comando
+//                                int exitCode = process.waitFor();
+//
+//                                if (exitCode == 0) {
+//                                    System.out.println("Processo com PID " + pid + " encerrado com sucesso.");
+//                                } else {
+//                                    System.out.println("Ocorreu um erro ao tentar encerrar o processo com PID " + pid);
+//                                }
+//                            } catch (IOException | InterruptedException e) {
+//                                System.out.println("Ocorreu uma exceção ao tentar encerrar o processo com PID " + pid);
+//                                e.printStackTrace();
+//                            }
+//                        }
+//                    }
+//                }
+                System.out.println("Porcentagem memoria: " + porcentagemUsoMemoria);
+                System.out.println("Porcentagem uso CPU: " + processador.getUso());
             }
-        }, 0, 5000);
+        },
+
+                 0, 5000);
     }
 }
