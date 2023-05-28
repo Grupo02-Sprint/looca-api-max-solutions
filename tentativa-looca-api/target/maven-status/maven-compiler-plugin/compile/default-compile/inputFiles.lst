@@ -1,7 +1,8 @@
-C:\Users\danie\OneDrive\Documentos\VsCode\Sprint03-2Semestre-grupo02\looca-api-max-solutions\tentativa-looca-api\src\main\java\com\mycompany\tentativa\looca\api\conexao\UsuarioDAO.java
-C:\Users\danie\OneDrive\Documentos\VsCode\Sprint03-2Semestre-grupo02\looca-api-max-solutions\tentativa-looca-api\src\main\java\com\mycompany\tentativa\looca\api\conexao\Conexao.java
-C:\Users\danie\OneDrive\Documentos\VsCode\Sprint03-2Semestre-grupo02\looca-api-max-solutions\tentativa-looca-api\src\main\java\com\mycompany\tentativa\looca\api\TelaDeLogin.java
-C:\Users\danie\OneDrive\Documentos\VsCode\Sprint03-2Semestre-grupo02\looca-api-max-solutions\tentativa-looca-api\src\main\java\com\mycompany\tentativa\looca\api\Slack.java
-C:\Users\danie\OneDrive\Documentos\VsCode\Sprint03-2Semestre-grupo02\looca-api-max-solutions\tentativa-looca-api\src\main\java\com\mycompany\tentativa\looca\api\conexao\ConexaoLocal.java
-C:\Users\danie\OneDrive\Documentos\VsCode\Sprint03-2Semestre-grupo02\looca-api-max-solutions\tentativa-looca-api\src\main\java\com\mycompany\tentativa\looca\api\conexao\Maquina.java
-C:\Users\danie\OneDrive\Documentos\VsCode\Sprint03-2Semestre-grupo02\looca-api-max-solutions\tentativa-looca-api\src\main\java\com\mycompany\tentativa\looca\api\LoocaApi.java
+C:\Users\Cesar\Documents\sprint\looca-api-max-solutions\tentativa-looca-api\src\main\java\com\mycompany\tentativa\looca\api\conexao\IdealDAO.java
+C:\Users\Cesar\Documents\sprint\looca-api-max-solutions\tentativa-looca-api\src\main\java\com\mycompany\tentativa\looca\api\IntegracaoSlack.java
+C:\Users\Cesar\Documents\sprint\looca-api-max-solutions\tentativa-looca-api\src\main\java\com\mycompany\tentativa\looca\api\TelaDeLogin.java
+C:\Users\Cesar\Documents\sprint\looca-api-max-solutions\tentativa-looca-api\src\main\java\com\mycompany\tentativa\looca\api\LoocaApi.java
+C:\Users\Cesar\Documents\sprint\looca-api-max-solutions\tentativa-looca-api\src\main\java\com\mycompany\tentativa\looca\api\conexao\UsuarioDAO.java
+C:\Users\Cesar\Documents\sprint\looca-api-max-solutions\tentativa-looca-api\src\main\java\com\mycompany\tentativa\looca\api\conexao\Conexao.java
+C:\Users\Cesar\Documents\sprint\looca-api-max-solutions\tentativa-looca-api\src\main\java\com\mycompany\tentativa\looca\api\conexao\Maquina.java
+C:\Users\Cesar\Documents\sprint\looca-api-max-solutions\tentativa-looca-api\src\main\java\com\mycompany\tentativa\looca\api\conexao\ConexaoLocal.java

@@ -19,7 +19,9 @@ import com.github.britooo.looca.api.group.rede.RedeInterface;
 import com.github.britooo.looca.api.group.rede.RedeInterfaceGroup;
 import com.github.britooo.looca.api.group.rede.RedeParametros;
 import com.github.britooo.looca.api.group.sistema.Sistema;
+import com.mycompany.tentativa.looca.api.conexao.IdealDAO;
 import com.mycompany.tentativa.looca.api.conexao.Maquina;
+import com.mycompany.tentativa.looca.api.conexao.TokenDAO;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -31,13 +33,21 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import java.text.DecimalFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.TimerTask;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.Timer;
+import com.slack.api.Slack;
+import com.slack.api.methods.request.chat.ChatPostMessageRequest;
+import com.slack.api.methods.response.chat.ChatPostMessageResponse;
 
 /**
  *
  * @author Cesar
  */
 public class LoocaApi {
+
+    private static String SLACK_TOKEN;
+    private static final String SLACK_CHANNEL = "alertas";
 
     private boolean existeDadosFKMaquina(int fkMaquina, int fkComponente, Connection connection) {
         PreparedStatement preparedStatement = null;
@@ -74,6 +84,33 @@ public class LoocaApi {
         }
 
         return false;
+    }
+    
+        private static void sendSlackAlert(String message, String channel) {
+        Slack slack = new Slack();
+       try {
+                        TokenDAO token = new TokenDAO();
+                        SLACK_TOKEN = token.getToken();
+                    } catch (SQLException ex) {
+                        Logger.getLogger(LoocaApi.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+            String token = SLACK_TOKEN;
+        ChatPostMessageRequest request = ChatPostMessageRequest.builder()
+                .token(token)
+                .channel(channel)
+                .text(message)
+                .build();
+
+        try {
+            ChatPostMessageResponse response = slack.methods().chatPostMessage(request);
+            if (response.isOk()) {
+                System.out.println("Alerta enviado com sucesso para o Slack.");
+            } else {
+                System.out.println("Erro ao enviar alerta para o Slack: " + response.getError());
+            }
+        } catch (Exception e) {
+            System.out.println("Erro ao enviar alerta para o Slack: " + e.getMessage());
+        }
     }
 
     public void demonstraLooca(Maquina m) {
@@ -120,7 +157,7 @@ public class LoocaApi {
             // Verificar se já existem dados da fk_maquina na tabela especificacao
             if (!existeDadosFKMaquina(m.getIdMaquina(), 3, conexao.conectaBD())) {
                 con.update("INSERT INTO especificacao (fk_maquina,fk_loja,fk_componente,data_ativacao_componente,capacidade) "
-                        + "values (?,?,?,?,?)", m.getIdMaquina(), m.getFkEmpresa(), formattedDateTime, tamanhoDisco);
+                        + "values (?,?,?,?,?)", m.getIdMaquina(), m.getFkEmpresa(), 3, formattedDateTime, tamanhoDisco);
             } else {
                 con.update("update especificacao set capacidade= ? where fk_maquina = ? and fk_componente = ?",
                         tamanhoDisco, m.getIdMaquina(), 3);
@@ -141,7 +178,7 @@ public class LoocaApi {
         if (!existeDadosFKMaquina(m.getIdMaquina(), 2, conexao.conectaBD())) {
             con.update("INSERT INTO especificacao (fk_maquina, fk_loja, fk_componente, data_ativacao_componente, capacidade) "
                     + "VALUES (?, ?, ?, ?, ?)",
-                    m.getIdMaquina() / 100000000, m.getFkEmpresa(), 2, formattedDateTime, frequenciaGigaHertz);
+                    m.getIdMaquina(), m.getFkEmpresa(), 2, formattedDateTime, frequenciaGigaHertz);
         } else {
             con.update("UPDATE especificacao SET capacidade = ? WHERE fk_maquina = ? AND fk_componente = ?",
                     frequenciaGigaHertz, m.getIdMaquina(), 2);
@@ -188,6 +225,7 @@ public class LoocaApi {
                 LocalDateTime dataHoraAtual = LocalDateTime.now();
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                 String formattedDateTime = dataHoraAtual.format(formatter);
+                //Métricas de memória tanto local quanto na Azure
                 con.update("insert into metrica "
                         + "(captura,dt_hora_captura,fk_maquina,fk_loja,fk_componente,fk_unidade_medida)"
                         + "values(?,?,?,?,?,?)",
@@ -197,7 +235,33 @@ public class LoocaApi {
                         m.getFkEmpresa(),
                         1,
                         4);
+                conLocal.update("insert into metrica "
+                        + "(captura,dt_hora_captura,fk_componente,fk_unidade_medida)"
+                        + "values(?,?,?,?)",
+                        porcentagemUsoMemoria,
+                        formattedDateTime,
+                        1,
+                        4);
+                Double limiteToleravelMemoria = 0.0;
+                Double limiteToleravelProcessador = 0.0;
+                Double limiteToleravelDisco = 0.0;
+                
+                try {
+                    IdealDAO ideal = new IdealDAO();
 
+                    limiteToleravelMemoria = ideal.getLimiteToleravel(m.getFkEmpresa(), 1);
+
+                    //Processador métricas
+                } catch (SQLException ex) {
+                    Logger.getLogger(LoocaApi.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                if (porcentagemUsoMemoria > limiteToleravelMemoria) {
+                        // Enviar alerta para o Slack
+                        sendSlackAlert("Alerta de Memória! Uso acima de " + limiteToleravelMemoria +"%.", SLACK_CHANNEL);
+                    }
+                System.out.println(limiteToleravelMemoria);
+
+                //Processador métricas
                 con.update("insert into metrica "
                         + "(captura,dt_hora_captura,fk_maquina,fk_loja,fk_componente,fk_unidade_medida)"
                         + "values(?,?,?,?,?,?)",
@@ -207,50 +271,65 @@ public class LoocaApi {
                         m.getFkEmpresa(),
                         2,
                         4);
+                conLocal.update("insert into metrica "
+                        + "(captura,dt_hora_captura,fk_componente,fk_unidade_medida)"
+                        + "values(?,?,?,?)",
+                        processador.getUso(),
+                        formattedDateTime,
+                        2,
+                        4);
+                 
+
+                try {
+                    IdealDAO ideal = new IdealDAO();
+
+                    limiteToleravelProcessador = ideal.getLimiteToleravel(m.getFkEmpresa(), 2);
+
+                    //Processador métricas
+                } catch (SQLException ex) {
+                    Logger.getLogger(LoocaApi.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                System.out.println(limiteToleravelProcessador);
+                if (processador.getUso() > limiteToleravelProcessador) {
+                        // Enviar alerta para o Slack
+                        sendSlackAlert("Alerta de CPU! Uso acima de "+ limiteToleravelProcessador +"%.", SLACK_CHANNEL);
+                    }
+
+                //Disco métricas
                 for (Disco disco : discos) {
                     con.update("insert into metrica "
                             + "(captura,dt_hora_captura,fk_maquina,fk_loja,fk_componente,fk_unidade_medida)"
                             + "values(?,?,?,?,?,?)",
-                            disco.getTempoDeTransferencia(),
+                            disco.getTempoDeTransferencia() / 1000000,
                             formattedDateTime,
                             m.getIdMaquina(),
                             m.getFkEmpresa(),
                             3,
-                            4);
-                    System.out.println("Tempo de transferência: " + disco.getTempoDeTransferencia());
+                            3);
+                    conLocal.update("insert into metrica "
+                            + "(captura,dt_hora_captura,fk_componente,fk_unidade_medida)"
+                            + "values(?,?,?,?)",
+                            disco.getTempoDeTransferencia() / 10000000,
+                            formattedDateTime,
+                            3,
+                            3);
+                    try {
+                        IdealDAO ideal = new IdealDAO();
+
+                        limiteToleravelDisco = ideal.getLimiteToleravel(m.getFkEmpresa(), 3);
+
+                        //Processador métricas
+                    } catch (SQLException ex) {
+                        Logger.getLogger(LoocaApi.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    System.out.println(limiteToleravelDisco);
+                    if (disco.getTempoDeTransferencia()/10000 > limiteToleravelDisco) {
+                        // Enviar alerta para o Slack
+                        sendSlackAlert("Alerta de Disco! Uso acima de 70%.", SLACK_CHANNEL);
+                    }
                 }
-//                if (porcentagemUsoMemoria > 80.0) {
-//                    for (Processo processo : processos) {
-//                        int pid = processo.getPid();
-//                        if (pid > 1000) {
-//                            try {
-//                                // Converte o PID para uma string
-//                                String pidString = Integer.toString(pid);
-//
-//                                // Executa o comando "kill" para encerrar o processo pelo seu PID
-//                                ProcessBuilder processBuilder = new ProcessBuilder("kill -9", pidString);
-//                                Process process = processBuilder.start();
-//
-//                                // Verifica o código de saída do comando
-//                                int exitCode = process.waitFor();
-//
-//                                if (exitCode == 0) {
-//                                    System.out.println("Processo com PID " + pid + " encerrado com sucesso.");
-//                                } else {
-//                                    System.out.println("Ocorreu um erro ao tentar encerrar o processo com PID " + pid);
-//                                }
-//                            } catch (IOException | InterruptedException e) {
-//                                System.out.println("Ocorreu uma exceção ao tentar encerrar o processo com PID " + pid);
-//                                e.printStackTrace();
-//                            }
-//                        }
-//                    }
-//                }
-                System.out.println("Porcentagem memoria: " + porcentagemUsoMemoria);
-                System.out.println("Porcentagem uso CPU: " + processador.getUso());
             }
         },
-
-                 0, 5000);
+                0, 5000);
     }
 }

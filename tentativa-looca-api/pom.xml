@@ -72,11 +72,11 @@
             <version>8.0.33</version>
         </dependency>
         
-        <!-- https://mvnrepository.com/artifact/com.github.seratch/jslack -->
+        <!-- https://mvnrepository.com/artifact/com.slack.api/slack-api-client -->
         <dependency>
-            <groupId>com.github.seratch</groupId>
-            <artifactId>jslack</artifactId>
-            <version>3.4.2</version>
+            <groupId>com.slack.api</groupId>
+            <artifactId>slack-api-client</artifactId>
+            <version>1.29.2</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.apache.httpcomponents.client5/httpclient5 -->
@@ -92,7 +92,12 @@
             <artifactId>httpmime</artifactId>
             <version>4.5.14</version>
         </dependency>
-
+        <dependency>
+            <groupId>com.github.seratch</groupId>
+            <artifactId>jslack-api-client</artifactId>
+            <version>3.4.2</version>
+            <type>jar</type>
+        </dependency>
     </dependencies>
     <name>looca-api</name>
 </project>
