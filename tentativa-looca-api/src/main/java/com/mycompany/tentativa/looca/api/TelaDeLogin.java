@@ -169,15 +169,21 @@ public class TelaDeLogin extends javax.swing.JFrame {
 
     private void buttonLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLoginActionPerformed
         // TODO add your handling code here:
-
-        try {
-
-            String patrimonio_maquina = inputPatrimonio.getText();
+        Log log = new Log();
+        String patrimonio_maquina = inputPatrimonio.getText();
             String senha_maquina = inputPassword.getText();
 
+            Maquina maquinaValida = new Maquina(patrimonio_maquina, senha_maquina);
+        UsuarioDAO objUsuarioDAO = new UsuarioDAO();
+        ResultSet resultMaquina = objUsuarioDAO.usuarioEntra(maquinaValida);
+        try {
+            log.login(resultMaquina, resultMaquina.next());
+        } catch (SQLException ex) {
+            Logger.getLogger(TelaDeLogin.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        try {
             Maquina maquina = new Maquina(patrimonio_maquina, senha_maquina);
-
-            UsuarioDAO objUsuarioDAO = new UsuarioDAO();
             ResultSet result = objUsuarioDAO.usuarioEntra(maquina);
 
             if (result.next()) {
