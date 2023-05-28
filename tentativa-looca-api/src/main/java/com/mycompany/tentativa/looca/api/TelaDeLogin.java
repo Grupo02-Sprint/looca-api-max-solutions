@@ -25,6 +25,7 @@ public class TelaDeLogin extends javax.swing.JFrame {
     Conexao conexao = new Conexao();
     JdbcTemplate con = conexao.getConexaoDoBanco();
     LoocaApi loocaApiMaxSolutions = new LoocaApi();
+    private static TelaDeLogin instancia;
 
     /**
      * Creates new form TelaDeLogin
@@ -32,6 +33,7 @@ public class TelaDeLogin extends javax.swing.JFrame {
     public TelaDeLogin() {
         initComponents();
         this.setIconImage(new ImageIcon(getClass().getResource("/assets/logo.png")).getImage());
+        instancia = this;
     }
 
     /**
@@ -183,8 +185,9 @@ public class TelaDeLogin extends javax.swing.JFrame {
                         "Login reallizado com sucesso", JOptionPane.INFORMATION_MESSAGE);
                 maquina.setFkEmpresa(result.getInt("id_loja"));
                 maquina.setIdMaquina(result.getInt("id_maquina"));
-                new TelaDeLogin().setVisible(false);
                 loocaApiMaxSolutions.demonstraLooca(maquina);
+                instancia.setVisible(false);
+
             } else {
                 JOptionPane.showMessageDialog(null, "Falha no login!",
                         "Tente novamente", JOptionPane.INFORMATION_MESSAGE);

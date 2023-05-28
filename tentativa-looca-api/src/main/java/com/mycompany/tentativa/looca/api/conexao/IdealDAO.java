@@ -19,7 +19,7 @@ public class IdealDAO {
 
     // Construtor que recebe a conexão com o banco de dados
     public IdealDAO() {
-        this.con =new Conexao().conectaBD();
+        this.con = new Conexao().conectaBD();
     }
 
     public Double getLimiteToleravel(int fkLoja, int fkComponente) throws SQLException {

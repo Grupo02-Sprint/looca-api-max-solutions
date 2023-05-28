@@ -45,10 +45,7 @@ import com.slack.api.methods.response.chat.ChatPostMessageResponse;
  * @author Cesar
  */
 public class LoocaApi {
-
-    private static String SLACK_TOKEN;
-    private static final String SLACK_CHANNEL = "alertas";
-
+    IntegracaoSlack integraSlack = new IntegracaoSlack();
     private boolean existeDadosFKMaquina(int fkMaquina, int fkComponente, Connection connection) {
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
@@ -84,33 +81,6 @@ public class LoocaApi {
         }
 
         return false;
-    }
-    
-        private static void sendSlackAlert(String message, String channel) {
-        Slack slack = new Slack();
-       try {
-                        TokenDAO token = new TokenDAO();
-                        SLACK_TOKEN = token.getToken();
-                    } catch (SQLException ex) {
-                        Logger.getLogger(LoocaApi.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-            String token = SLACK_TOKEN;
-        ChatPostMessageRequest request = ChatPostMessageRequest.builder()
-                .token(token)
-                .channel(channel)
-                .text(message)
-                .build();
-
-        try {
-            ChatPostMessageResponse response = slack.methods().chatPostMessage(request);
-            if (response.isOk()) {
-                System.out.println("Alerta enviado com sucesso para o Slack.");
-            } else {
-                System.out.println("Erro ao enviar alerta para o Slack: " + response.getError());
-            }
-        } catch (Exception e) {
-            System.out.println("Erro ao enviar alerta para o Slack: " + e.getMessage());
-        }
     }
 
     public void demonstraLooca(Maquina m) {
@@ -256,8 +226,7 @@ public class LoocaApi {
                     Logger.getLogger(LoocaApi.class.getName()).log(Level.SEVERE, null, ex);
                 }
                 if (porcentagemUsoMemoria > limiteToleravelMemoria) {
-                        // Enviar alerta para o Slack
-                        sendSlackAlert("Alerta de Memória! Uso acima de " + limiteToleravelMemoria +"%.", SLACK_CHANNEL);
+                        integraSlack.receberMensagem(porcentagemUsoMemoria,m.getIdMaquina(),"memória");
                     }
                 System.out.println(limiteToleravelMemoria);
 
@@ -291,8 +260,7 @@ public class LoocaApi {
                 }
                 System.out.println(limiteToleravelProcessador);
                 if (processador.getUso() > limiteToleravelProcessador) {
-                        // Enviar alerta para o Slack
-                        sendSlackAlert("Alerta de CPU! Uso acima de "+ limiteToleravelProcessador +"%.", SLACK_CHANNEL);
+                        integraSlack.receberMensagem(processador.getUso(),m.getIdMaquina(),"processador");
                     }
 
                 //Disco métricas
@@ -324,8 +292,7 @@ public class LoocaApi {
                     }
                     System.out.println(limiteToleravelDisco);
                     if (disco.getTempoDeTransferencia()/10000 > limiteToleravelDisco) {
-                        // Enviar alerta para o Slack
-                        sendSlackAlert("Alerta de Disco! Uso acima de 70%.", SLACK_CHANNEL);
+                         integraSlack.receberMensagem(disco.getTempoDeTransferencia().doubleValue(),m.getIdMaquina(),"disco");
                     }
                 }
             }
