@@ -45,7 +45,9 @@ import com.slack.api.methods.response.chat.ChatPostMessageResponse;
  * @author Cesar
  */
 public class LoocaApi {
+
     IntegracaoSlack integraSlack = new IntegracaoSlack();
+
     private boolean existeDadosFKMaquina(int fkMaquina, int fkComponente, Connection connection) {
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
@@ -154,16 +156,15 @@ public class LoocaApi {
                     frequenciaGigaHertz, m.getIdMaquina(), 2);
         }
 
-        for (Processo processo : processos) {
-//         conLocal.update("Insert into processo (pidProcesso,dtHora,usoCpu,usoMemoria) values"
-//                   + " (?,?,?,?);",
-//                 processo.getPid(),
-//                 dataHoraAtual,
-//                 processo.getUsoCpu(),
-//                 processo.getUsoMemoria()); //NOI18N
-            //  System.out.println(processo);
-        }
-
+//        for (Processo processo : processos) {
+////         conLocal.update("Insert into processo (pidProcesso,dtHora,usoCpu,usoMemoria) values"
+////                   + " (?,?,?,?);",
+////                 processo.getPid(),
+////                 dataHoraAtual,
+////                 processo.getUsoCpu(),
+////                 processo.getUsoMemoria()); //NOI18N
+//            //  System.out.println(processo);
+//        }
         //System.out.println(redeParametros);
         for (RedeInterface redeInterface : interfaces) {
             con.update(String.format("Insert into rede (bytes_enviados, bytes_recebidos,nome) values (%d,%d,'%s');",
@@ -215,7 +216,7 @@ public class LoocaApi {
                 Double limiteToleravelMemoria = 0.0;
                 Double limiteToleravelProcessador = 0.0;
                 Double limiteToleravelDisco = 0.0;
-                
+
                 try {
                     IdealDAO ideal = new IdealDAO();
 
@@ -226,8 +227,8 @@ public class LoocaApi {
                     Logger.getLogger(LoocaApi.class.getName()).log(Level.SEVERE, null, ex);
                 }
                 if (porcentagemUsoMemoria > limiteToleravelMemoria) {
-                        integraSlack.receberMensagem(porcentagemUsoMemoria,m.getIdMaquina(),"memória");
-                    }
+                    integraSlack.receberMensagem(porcentagemUsoMemoria, m.getIdMaquina(), "memória");
+                }
                 System.out.println(limiteToleravelMemoria);
 
                 //Processador métricas
@@ -247,7 +248,6 @@ public class LoocaApi {
                         formattedDateTime,
                         2,
                         4);
-                 
 
                 try {
                     IdealDAO ideal = new IdealDAO();
@@ -260,8 +260,8 @@ public class LoocaApi {
                 }
                 System.out.println(limiteToleravelProcessador);
                 if (processador.getUso() > limiteToleravelProcessador) {
-                        integraSlack.receberMensagem(processador.getUso(),m.getIdMaquina(),"processador");
-                    }
+                    integraSlack.receberMensagem(processador.getUso(), m.getIdMaquina(), "processador");
+                }
 
                 //Disco métricas
                 for (Disco disco : discos) {
@@ -291,12 +291,55 @@ public class LoocaApi {
                         Logger.getLogger(LoocaApi.class.getName()).log(Level.SEVERE, null, ex);
                     }
                     System.out.println(limiteToleravelDisco);
-                    if (disco.getTempoDeTransferencia()/10000 > limiteToleravelDisco) {
-                         integraSlack.receberMensagem(disco.getTempoDeTransferencia().doubleValue(),m.getIdMaquina(),"disco");
+                    if (disco.getTempoDeTransferencia() / 10000 > limiteToleravelDisco) {
+                        integraSlack.receberMensagem(disco.getTempoDeTransferencia().doubleValue(), m.getIdMaquina(), "disco");
+                    }
+                }
+                for (Processo processo : processos) {
+                    int pid = processo.getPid();
+                  try {
+                    // Executar uma consulta para verificar se o PID já existe no banco de dados
+                    String query = "SELECT COUNT(*) FROM processo WHERE pid = ?";
+                    Conexao conexao = new Conexao();
+                    // Preparar a declaração SQL
+                    PreparedStatement statement = conexao.conectaBD().prepareStatement(query);
+                    statement.setInt(1, pid);
+
+                    // Executar a consulta
+                    ResultSet resultSet = statement.executeQuery();
+
+                    // Verificar se há algum resultado
+                    resultSet.next();
+                    int count = resultSet.getInt(1);
+
+                    if (count == 0) {
+                        con.update("INSERT INTO processo values (?,?,?,?,?,?)",
+                                processo.getPid(),
+                                processo.getUsoCpu(),
+                                processo.getUsoMemoria(),
+                                m.getIdMaquina(),
+                                m.getFkEmpresa(),
+                                dataHoraAtual);
+                    } else {
+                        con.update("UPDATE processo SET uso_cpu = ?,"
+                                + " uso_memoria = ?, "
+                                + " data_hora_registro = ? "
+                                + "WHERE pid = ? ",
+                                processo.getUsoCpu(),
+                                processo.getUsoMemoria(),
+                                dataHoraAtual,
+                                processo.getPid());
+                    }
+
+                    // Fechar o ResultSet e a declaração SQL
+                    resultSet.close();
+                    statement.close();
+                  } catch (SQLException ex) {
+                        Logger.getLogger(LoocaApi.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
             }
         },
-                0, 5000);
+                0, 10000);
     }
 }
