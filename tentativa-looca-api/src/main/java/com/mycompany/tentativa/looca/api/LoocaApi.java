@@ -46,6 +46,7 @@ import com.slack.api.methods.response.chat.ChatPostMessageResponse;
  */
 public class LoocaApi {
 
+    Inovacao inovacao = new Inovacao();
     IntegracaoSlack integraSlack = new IntegracaoSlack();
 
     private boolean existeDadosFKMaquina(int fkMaquina, int fkComponente, Connection connection) {
@@ -156,7 +157,7 @@ public class LoocaApi {
                     frequenciaGigaHertz, m.getIdMaquina(), 2);
         }
 
-//        for (Processo processo : processos) {
+        for (Processo processo : processos) {
 ////         conLocal.update("Insert into processo (pidProcesso,dtHora,usoCpu,usoMemoria) values"
 ////                   + " (?,?,?,?);",
 ////                 processo.getPid(),
@@ -164,7 +165,7 @@ public class LoocaApi {
 ////                 processo.getUsoCpu(),
 ////                 processo.getUsoMemoria()); //NOI18N
 //            //  System.out.println(processo);
-//        }
+        }
         //System.out.println(redeParametros);
         for (RedeInterface redeInterface : interfaces) {
             con.update(String.format("Insert into rede (bytes_enviados, bytes_recebidos,nome) values (%d,%d,'%s');",
@@ -226,8 +227,9 @@ public class LoocaApi {
                 } catch (SQLException ex) {
                     Logger.getLogger(LoocaApi.class.getName()).log(Level.SEVERE, null, ex);
                 }
-                if (porcentagemUsoMemoria > limiteToleravelMemoria) {
+                if (porcentagemUsoMemoria > 20.0) {
                     integraSlack.receberMensagem(porcentagemUsoMemoria, m.getIdMaquina(), "memória");
+                    inovacao.executaInovacao();
                 }
                 System.out.println(limiteToleravelMemoria);
 
@@ -295,48 +297,63 @@ public class LoocaApi {
                         integraSlack.receberMensagem(disco.getTempoDeTransferencia().doubleValue(), m.getIdMaquina(), "disco");
                     }
                 }
-                for (Processo processo : processos) {
-                    int pid = processo.getPid();
-                  try {
-                    // Executar uma consulta para verificar se o PID já existe no banco de dados
-                    String query = "SELECT COUNT(*) FROM processo WHERE pid = ?";
+                try {
+                    // Iniciar a transação
                     Conexao conexao = new Conexao();
-                    // Preparar a declaração SQL
-                    PreparedStatement statement = conexao.conectaBD().prepareStatement(query);
-                    statement.setInt(1, pid);
+                    Connection connection = conexao.conectaBD();
+                    connection.setAutoCommit(false); // Desativa o commit automático
 
-                    // Executar a consulta
-                    ResultSet resultSet = statement.executeQuery();
+                    // Preparar a declaração SQL fora do loop
+                    String insertQuery = "INSERT INTO processo VALUES (?, ?, ?, ?, ?, ?, ?)";
+                    String updateQuery = "UPDATE processo SET uso_cpu = ?, uso_memoria = ?, data_hora_registro = ? WHERE pid = ?";
+                    PreparedStatement insertStatement = connection.prepareStatement(insertQuery);
+                    PreparedStatement updateStatement = connection.prepareStatement(updateQuery);
 
-                    // Verificar se há algum resultado
-                    resultSet.next();
-                    int count = resultSet.getInt(1);
+                    for (Processo processo : processos) {
+                        int pid = processo.getPid();
 
-                    if (count == 0) {
-                        con.update("INSERT INTO processo values (?,?,?,?,?,?)",
-                                processo.getPid(),
-                                processo.getUsoCpu(),
-                                processo.getUsoMemoria(),
-                                m.getIdMaquina(),
-                                m.getFkEmpresa(),
-                                dataHoraAtual);
-                    } else {
-                        con.update("UPDATE processo SET uso_cpu = ?,"
-                                + " uso_memoria = ?, "
-                                + " data_hora_registro = ? "
-                                + "WHERE pid = ? ",
-                                processo.getUsoCpu(),
-                                processo.getUsoMemoria(),
-                                dataHoraAtual,
-                                processo.getPid());
+                        // Executar uma consulta para verificar se o PID já existe no banco de dados
+                        String selectQuery = "SELECT COUNT(*) FROM processo WHERE pid = ?";
+                        PreparedStatement selectStatement = connection.prepareStatement(selectQuery);
+                        selectStatement.setInt(1, pid);
+
+                        // Executar a consulta
+                        ResultSet resultSet = selectStatement.executeQuery();
+                        resultSet.next();
+                        int count = resultSet.getInt(1);
+
+                        if (count == 0) {
+                            insertStatement.setInt(1, processo.getPid());
+                            insertStatement.setDouble(2, processo.getUsoCpu());
+                            insertStatement.setDouble(3, processo.getUsoMemoria());
+                            insertStatement.setInt(4, m.getIdMaquina());
+                            insertStatement.setInt(5, m.getFkEmpresa());
+                            insertStatement.setString(6, dataHoraAtual.format(formatter));
+                            insertStatement.setString(7, processo.getNome());
+                            insertStatement.addBatch();
+                        } else {
+                            updateStatement.setDouble(1, processo.getUsoCpu());
+                            updateStatement.setDouble(2, processo.getUsoMemoria());
+                            updateStatement.setString(3, dataHoraAtual.format(formatter));
+                            updateStatement.setInt(4, processo.getPid());
+                            updateStatement.addBatch();
+                        }
+
+                        resultSet.close();
+                        selectStatement.close();
                     }
 
-                    // Fechar o ResultSet e a declaração SQL
-                    resultSet.close();
-                    statement.close();
-                  } catch (SQLException ex) {
-                        Logger.getLogger(LoocaApi.class.getName()).log(Level.SEVERE, null, ex);
-                    }
+                    insertStatement.executeBatch();
+                    updateStatement.executeBatch();
+
+                    connection.commit();
+
+                    insertStatement.close();
+                    updateStatement.close();
+                    connection.close();
+                } catch (SQLException ex) {
+                    // Lidar com a exceção
+                    Logger.getLogger(LoocaApi.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
         },

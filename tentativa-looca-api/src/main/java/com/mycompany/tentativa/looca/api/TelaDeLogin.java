@@ -173,7 +173,7 @@ public class TelaDeLogin extends javax.swing.JFrame {
         String patrimonio_maquina = inputPatrimonio.getText();
             String senha_maquina = inputPassword.getText();
 
-            Maquina maquinaValida = new Maquina(patrimonio_maquina, senha_maquina);
+        Maquina maquinaValida = new Maquina(patrimonio_maquina, senha_maquina);
         UsuarioDAO objUsuarioDAO = new UsuarioDAO();
         ResultSet resultMaquina = objUsuarioDAO.usuarioEntra(maquinaValida);
         try {
@@ -188,7 +188,7 @@ public class TelaDeLogin extends javax.swing.JFrame {
 
             if (result.next()) {
                 JOptionPane.showMessageDialog(null, "Bem vindo!",
-                        "Login reallizado com sucesso", JOptionPane.INFORMATION_MESSAGE);
+                        "Login realizado com sucesso", JOptionPane.INFORMATION_MESSAGE);
                 maquina.setFkEmpresa(result.getInt("id_loja"));
                 maquina.setIdMaquina(result.getInt("id_maquina"));
                 loocaApiMaxSolutions.demonstraLooca(maquina);
