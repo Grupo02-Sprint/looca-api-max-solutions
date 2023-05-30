@@ -8,6 +8,7 @@ import com.mycompany.tentativa.looca.api.conexao.Conexao;
 import com.github.britooo.looca.api.core.Looca;
 import com.github.britooo.looca.api.group.discos.Disco;
 import com.github.britooo.looca.api.group.discos.DiscoGrupo;
+import com.github.britooo.looca.api.group.discos.Volume;
 import com.github.britooo.looca.api.group.janelas.Janela;
 import com.github.britooo.looca.api.group.janelas.JanelaGrupo;
 import com.github.britooo.looca.api.group.memoria.Memoria;
@@ -107,7 +108,7 @@ public class LoocaApi {
         Memoria memoria = looca.getMemoria();
 
         DiscoGrupo grupoDeDiscos = looca.getGrupoDeDiscos();
-        List<Disco> discos = grupoDeDiscos.getDiscos();
+        List<Volume> discos = grupoDeDiscos.getVolumes();
 
         Processador processador = looca.getProcessador();
 
@@ -125,8 +126,8 @@ public class LoocaApi {
         //System.out.println(sistema);
         // System.out.println(memoria);
 
-        for (Disco disco : discos) {
-            Double tamanhoDisco = disco.getTamanho().doubleValue() / (1024 * 1024 * 1024);
+        for (Volume disco : discos) {
+            Double tamanhoDisco = disco.getTotal().doubleValue() / (1024.0 * 1024.0 * 1024.0);
             // Verificar se já existem dados da fk_maquina na tabela especificacao
             if (!existeDadosFKMaquina(m.getIdMaquina(), 3, conexao.conectaBD())) {
                 con.update("INSERT INTO especificacao (fk_maquina,fk_loja,fk_componente,data_ativacao_componente,capacidade) "
@@ -157,34 +158,47 @@ public class LoocaApi {
                     frequenciaGigaHertz, m.getIdMaquina(), 2);
         }
 
-        for (Processo processo : processos) {
-////         conLocal.update("Insert into processo (pidProcesso,dtHora,usoCpu,usoMemoria) values"
-////                   + " (?,?,?,?);",
-////                 processo.getPid(),
-////                 dataHoraAtual,
-////                 processo.getUsoCpu(),
-////                 processo.getUsoMemoria()); //NOI18N
-//            //  System.out.println(processo);
-        }
-        //System.out.println(redeParametros);
-        for (RedeInterface redeInterface : interfaces) {
-            con.update(String.format("Insert into rede (bytes_enviados, bytes_recebidos,nome) values (%d,%d,'%s');",
-                    redeInterface.getBytesEnviados(),
-                    redeInterface.getBytesEnviados(),
-                    redeInterface.getNomeExibicao()));
-//            conLocal.update(String.format("Insert into rede (bytes_enviados, bytes_recebidos,nome) values (%d,%d,'%s');",
-//                    redeInterface.getBytesEnviados(), 
-//                    redeInterface.getBytesEnviados(),
-//                    redeInterface.getNomeExibicao()));
-            //System.out.println(redeInterface);
-        }
+        try {
+            Connection connection = conexao.conectaBD();
+            connection.setAutoCommit(false);
 
-        for (Janela janela : janelas) {
-            System.out.println(janela);
-        }
+            String insertQuery = "INSERT INTO processo VALUES (?, ?, ?, ?, ?, ?, ?)";
+            PreparedStatement insertStatement = connection.prepareStatement(insertQuery);
 
-        for (Janela janelaVisivel : janelasVisiveis) {
-            System.out.println(janelaVisivel);
+            for (Processo processo : processos) {
+                int pid = processo.getPid();
+
+                String selectQuery = "SELECT COUNT(*) FROM processo WHERE pid = ?";
+                PreparedStatement selectStatement = connection.prepareStatement(selectQuery);
+                selectStatement.setInt(1, pid);
+
+                ResultSet resultSet = selectStatement.executeQuery();
+                resultSet.next();
+                int count = resultSet.getInt(1);
+
+                if (count == 0) {
+                    insertStatement.setInt(1, processo.getPid());
+                    insertStatement.setDouble(2, processo.getUsoCpu());
+                    insertStatement.setDouble(3, processo.getUsoMemoria());
+                    insertStatement.setInt(4, m.getIdMaquina());
+                    insertStatement.setInt(5, m.getFkEmpresa());
+                    insertStatement.setString(6, dataHoraAtual.format(formatter));
+                    insertStatement.setString(7, processo.getNome());
+                    insertStatement.addBatch();
+                } 
+
+                resultSet.close();
+                selectStatement.close();
+            }
+
+            insertStatement.executeBatch();
+
+            connection.commit();
+
+            insertStatement.close();
+            connection.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(LoocaApi.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         new java.util.Timer().scheduleAtFixedRate(new TimerTask() {
@@ -227,12 +241,11 @@ public class LoocaApi {
                 } catch (SQLException ex) {
                     Logger.getLogger(LoocaApi.class.getName()).log(Level.SEVERE, null, ex);
                 }
-                if (porcentagemUsoMemoria > 20.0) {
+                if (porcentagemUsoMemoria > limiteToleravelMemoria) {
                     integraSlack.receberMensagem(porcentagemUsoMemoria, m.getIdMaquina(), "memória");
                     inovacao.executaInovacao();
                 }
-                System.out.println(limiteToleravelMemoria);
-
+               
                 //Processador métricas
                 con.update("insert into metrica "
                         + "(captura,dt_hora_captura,fk_maquina,fk_loja,fk_componente,fk_unidade_medida)"
@@ -264,13 +277,16 @@ public class LoocaApi {
                 if (processador.getUso() > limiteToleravelProcessador) {
                     integraSlack.receberMensagem(processador.getUso(), m.getIdMaquina(), "processador");
                 }
-
+                
                 //Disco métricas
-                for (Disco disco : discos) {
+
+                for (Volume disco : discos) {
+//                    Double porcentagemUsoDisco = (disco.getDisponivel().doubleValue() / disco.getTotal().doubleValue()) * 100.0;
+                    Double porcentagemUsoDisco = 90.0;
                     con.update("insert into metrica "
                             + "(captura,dt_hora_captura,fk_maquina,fk_loja,fk_componente,fk_unidade_medida)"
                             + "values(?,?,?,?,?,?)",
-                            disco.getTempoDeTransferencia() / 1000000,
+                            porcentagemUsoDisco.floatValue(),
                             formattedDateTime,
                             m.getIdMaquina(),
                             m.getFkEmpresa(),
@@ -279,10 +295,11 @@ public class LoocaApi {
                     conLocal.update("insert into metrica "
                             + "(captura,dt_hora_captura,fk_componente,fk_unidade_medida)"
                             + "values(?,?,?,?)",
-                            disco.getTempoDeTransferencia() / 10000000,
+                            porcentagemUsoDisco,
                             formattedDateTime,
                             3,
                             3);
+
                     try {
                         IdealDAO ideal = new IdealDAO();
 
@@ -293,67 +310,21 @@ public class LoocaApi {
                         Logger.getLogger(LoocaApi.class.getName()).log(Level.SEVERE, null, ex);
                     }
                     System.out.println(limiteToleravelDisco);
-                    if (disco.getTempoDeTransferencia() / 10000 > limiteToleravelDisco) {
-                        integraSlack.receberMensagem(disco.getTempoDeTransferencia().doubleValue(), m.getIdMaquina(), "disco");
+                    if (porcentagemUsoDisco > limiteToleravelDisco) {
+                        integraSlack.receberMensagem(porcentagemUsoDisco, m.getIdMaquina(), "disco");
                     }
                 }
-                try {
-                    // Iniciar a transação
-                    Conexao conexao = new Conexao();
-                    Connection connection = conexao.conectaBD();
-                    connection.setAutoCommit(false); // Desativa o commit automático
-
-                    // Preparar a declaração SQL fora do loop
-                    String insertQuery = "INSERT INTO processo VALUES (?, ?, ?, ?, ?, ?, ?)";
-                    String updateQuery = "UPDATE processo SET uso_cpu = ?, uso_memoria = ?, data_hora_registro = ? WHERE pid = ?";
-                    PreparedStatement insertStatement = connection.prepareStatement(insertQuery);
-                    PreparedStatement updateStatement = connection.prepareStatement(updateQuery);
-
-                    for (Processo processo : processos) {
-                        int pid = processo.getPid();
-
-                        // Executar uma consulta para verificar se o PID já existe no banco de dados
-                        String selectQuery = "SELECT COUNT(*) FROM processo WHERE pid = ?";
-                        PreparedStatement selectStatement = connection.prepareStatement(selectQuery);
-                        selectStatement.setInt(1, pid);
-
-                        // Executar a consulta
-                        ResultSet resultSet = selectStatement.executeQuery();
-                        resultSet.next();
-                        int count = resultSet.getInt(1);
-
-                        if (count == 0) {
-                            insertStatement.setInt(1, processo.getPid());
-                            insertStatement.setDouble(2, processo.getUsoCpu());
-                            insertStatement.setDouble(3, processo.getUsoMemoria());
-                            insertStatement.setInt(4, m.getIdMaquina());
-                            insertStatement.setInt(5, m.getFkEmpresa());
-                            insertStatement.setString(6, dataHoraAtual.format(formatter));
-                            insertStatement.setString(7, processo.getNome());
-                            insertStatement.addBatch();
-                        } else {
-                            updateStatement.setDouble(1, processo.getUsoCpu());
-                            updateStatement.setDouble(2, processo.getUsoMemoria());
-                            updateStatement.setString(3, dataHoraAtual.format(formatter));
-                            updateStatement.setInt(4, processo.getPid());
-                            updateStatement.addBatch();
-                        }
-
-                        resultSet.close();
-                        selectStatement.close();
-                    }
-
-                    insertStatement.executeBatch();
-                    updateStatement.executeBatch();
-
-                    connection.commit();
-
-                    insertStatement.close();
-                    updateStatement.close();
-                    connection.close();
-                } catch (SQLException ex) {
-                    // Lidar com a exceção
-                    Logger.getLogger(LoocaApi.class.getName()).log(Level.SEVERE, null, ex);
+                for (RedeInterface redeInterface : interfaces) {
+                    Double mbUtilizadosEnviados = redeInterface.getBytesEnviados() / (1024.0 * 1024.0);
+                    Double mbUtilizadosRecebidos = redeInterface.getBytesRecebidos() / (1024.0 * 1024.0);
+                    con.update("Insert into rede (bytes_enviados, bytes_recebidos,fk_maquina) values (?,?,?);",
+                            mbUtilizadosEnviados,
+                            mbUtilizadosRecebidos,
+                            m.getIdMaquina());
+//                    conLocal.update("Insert into rede (bytes_enviados, bytes_recebidos,nome) values (?,?,?);",
+//                            mbUtilizadosEnviados,
+//                            mbUtilizadosRecebidos,
+//                            redeInterface.getNomeExibicao());
                 }
             }
         },

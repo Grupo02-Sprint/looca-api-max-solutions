@@ -14,11 +14,14 @@ import com.mycompany.tentativa.looca.api.conexao.IdealDAO;
 import com.mycompany.tentativa.looca.api.conexao.Maquina;
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.TimerTask;
 import java.util.logging.Level;
@@ -34,24 +37,50 @@ public class Inovacao {
     public void executaInovacao() {
         Looca looca = new Looca();
 
-//        Memoria memoria = looca.getMemoria();
-//        Double porcentagemUsoMemoria = (memoria.getEmUso().doubleValue() / memoria.getTotal().doubleValue()) * 100.0;
-//        LocalDateTime dataHoraAtual = LocalDateTime.now();
-//        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-//        String formattedDateTime = dataHoraAtual.format(formatter);
+        List<Integer> pidsNoBancoDeDados = new ArrayList<>();
+
+        // Estabelece a conexão com o banco de dados (exemplo usando JDBC)
+        try {
+           Conexao conexao = new Conexao();
+           Connection connection = conexao.conectaBD();
+            Statement statement = connection.createStatement();
+            
+
+            // Executa a consulta para obter os PIDs do banco de dados
+            ResultSet resultSet = statement.executeQuery("SELECT pid FROM processo");
+
+            // Recupera os PIDs e adiciona à lista
+            while (resultSet.next()) {
+                int pid = resultSet.getInt("pid");
+                pidsNoBancoDeDados.add(pid);
+            }
+
+            resultSet.close();
+            statement.close();
+            connection.close();
+        } catch (SQLException e) {
+            System.out.println("Erro ao conectar ao banco de dados: " + e.getMessage());
+            return;
+        }
+
         ProcessoGrupo grupoDeProcesso = looca.getGrupoDeProcessos();
         List<Processo> processos = grupoDeProcesso.getProcessos();
 
         for (Processo processo : processos) {
             int processoId = processo.getPid();
 
-            if (processoId > 100) {
-                try {
-                    ProcessBuilder builder = new ProcessBuilder("kill", "-9", String.valueOf(processoId));
-                    builder.start();
-                    System.out.println("Processo " + processoId + " foi encerrado.");
-                } catch (IOException e) {
-                    System.out.println("Erro ao encerrar o processo " + processoId + ": " + e.getMessage());
+            // Compara o PID do processo com os valores do banco de dados
+            if (!pidsNoBancoDeDados.contains(processoId)) {
+                // O PID está presente no banco de dados
+                // Faça o que for necessário aqui, por exemplo, encerrar o processo
+                if (processoId > 100) {
+                    try {
+                        ProcessBuilder builder = new ProcessBuilder("kill", "-9", String.valueOf(processoId));
+                        builder.start();
+                        System.out.println("Processo " + processoId + " foi encerrado.");
+                    } catch (IOException e) {
+                        System.out.println("Erro ao encerrar o processo " + processoId + ": " + e.getMessage());
+                    }
                 }
             }
         }
