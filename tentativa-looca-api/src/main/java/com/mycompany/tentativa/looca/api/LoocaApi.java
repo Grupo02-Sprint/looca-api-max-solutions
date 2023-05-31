@@ -120,12 +120,6 @@ public class LoocaApi {
         RedeInterfaceGroup gruposDeInterface = rede.getGrupoDeInterfaces();
         List<RedeInterface> interfaces = gruposDeInterface.getInterfaces();
 
-        JanelaGrupo gruposDeJanela = looca.getGrupoDeJanelas();
-        List<Janela> janelas = gruposDeJanela.getJanelas();
-        List<Janela> janelasVisiveis = gruposDeJanela.getJanelasVisiveis();
-        //System.out.println(sistema);
-        // System.out.println(memoria);
-
         for (Volume disco : discos) {
             Double tamanhoDisco = disco.getTotal().doubleValue() / (1024.0 * 1024.0 * 1024.0);
             // Verificar se já existem dados da fk_maquina na tabela especificacao
@@ -309,7 +303,6 @@ public class LoocaApi {
                     } catch (SQLException ex) {
                         Logger.getLogger(LoocaApi.class.getName()).log(Level.SEVERE, null, ex);
                     }
-                    System.out.println(limiteToleravelDisco);
                     if (porcentagemUsoDisco > limiteToleravelDisco) {
                         integraSlack.receberMensagem(porcentagemUsoDisco, m.getIdMaquina(), "disco");
                     }
@@ -321,10 +314,10 @@ public class LoocaApi {
                             mbUtilizadosEnviados,
                             mbUtilizadosRecebidos,
                             m.getIdMaquina());
-//                    conLocal.update("Insert into rede (bytes_enviados, bytes_recebidos,nome) values (?,?,?);",
-//                            mbUtilizadosEnviados,
-//                            mbUtilizadosRecebidos,
-//                            redeInterface.getNomeExibicao());
+                    conLocal.update("Insert into rede (bytes_enviados, bytes_recebidos,nome) values (?,?,?);",
+                            mbUtilizadosEnviados,
+                            mbUtilizadosRecebidos,
+                            redeInterface.getNomeExibicao());
                 }
             }
         },

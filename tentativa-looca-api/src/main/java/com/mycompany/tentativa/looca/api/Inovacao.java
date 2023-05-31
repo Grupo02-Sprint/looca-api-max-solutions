@@ -38,7 +38,7 @@ public class Inovacao {
         Looca looca = new Looca();
 
         List<Integer> pidsNoBancoDeDados = new ArrayList<>();
-
+       
         // Estabelece a conexão com o banco de dados (exemplo usando JDBC)
         try {
            Conexao conexao = new Conexao();
