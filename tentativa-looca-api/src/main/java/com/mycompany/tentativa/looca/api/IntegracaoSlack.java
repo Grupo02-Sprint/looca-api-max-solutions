@@ -14,7 +14,7 @@ import java.util.logging.Logger;
  */
 public class IntegracaoSlack {
 
-    private static String webHooksUrl = "https://hooks.slack.com/services/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";
+    private static String webHooksUrl = "https://hooks.slack.com/services/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";
     private static String slackChannel = "#alertas";
     private static String slackToken;
 
