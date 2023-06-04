@@ -312,10 +312,11 @@ public class LoocaApi {
                 for (RedeInterface redeInterface : interfaces) {
                     Double mbUtilizadosEnviados = redeInterface.getBytesEnviados() / (1024.0 * 1024.0);
                     Double mbUtilizadosRecebidos = redeInterface.getBytesRecebidos() / (1024.0 * 1024.0);
-                    con.update("Insert into rede (bytes_enviados, bytes_recebidos,fk_maquina) values (?,?,?);",
+                    con.update("Insert into rede (bytes_enviados, bytes_recebidos,fk_maquina, dt_hora) values (?,?,?,?);",
                             mbUtilizadosEnviados,
                             mbUtilizadosRecebidos,
-                            m.getIdMaquina());
+                            m.getIdMaquina(),
+                            dataHoraAtual);
                     conLocal.update("Insert into rede (bytes_enviados, bytes_recebidos,nome) values (?,?,?);",
                             mbUtilizadosEnviados,
                             mbUtilizadosRecebidos,
