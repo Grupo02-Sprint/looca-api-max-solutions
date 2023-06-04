@@ -194,7 +194,9 @@ public class LoocaApi {
         } catch (SQLException ex) {
             Logger.getLogger(LoocaApi.class.getName()).log(Level.SEVERE, null, ex);
         }
-
+           
+        System.out.println("Iniciando monitoramento...");
+        
         new java.util.Timer().scheduleAtFixedRate(new TimerTask() {
 
             @Override
@@ -276,7 +278,7 @@ public class LoocaApi {
 
                 for (Volume disco : discos) {
 //                    Double porcentagemUsoDisco = (disco.getDisponivel().doubleValue() / disco.getTotal().doubleValue()) * 100.0;
-                    Double porcentagemUsoDisco = 90.0;
+                    Double porcentagemUsoDisco = 40.0;
                     con.update("insert into metrica "
                             + "(captura,dt_hora_captura,fk_maquina,fk_loja,fk_componente,fk_unidade_medida)"
                             + "values(?,?,?,?,?,?)",
@@ -285,7 +287,7 @@ public class LoocaApi {
                             m.getIdMaquina(),
                             m.getFkEmpresa(),
                             3,
-                            3);
+                            4);
                     conLocal.update("insert into metrica "
                             + "(captura,dt_hora_captura,fk_componente,fk_unidade_medida)"
                             + "values(?,?,?,?)",
