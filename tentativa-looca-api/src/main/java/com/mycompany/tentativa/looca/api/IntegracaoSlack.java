@@ -14,7 +14,7 @@ import java.util.logging.Logger;
  */
 public class IntegracaoSlack {
 
-    private static String webHooksUrl = "https://hooks.slack.com/services/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";
+    private static String webHooksUrl = "https://hooks.slack.com/services/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";
     private static String slackChannel = "#alertas";
     private static String slackToken;
 
@@ -32,7 +32,7 @@ public class IntegracaoSlack {
         // Aqui precisa colocar a frase com base na validação
         // EX: se for memoria RAM, envia uma mensagem dizendo que a memoria ram
         // tá em metrica uso
-        String msg = String.format("Alerta no componente %s da maquina %d, %.2f de uso",componente,fkMaquina, metrica);
+        String msg = String.format("Alerta no componente %s da maquina %d, %.2f porcento de uso",componente,fkMaquina, metrica);
         enviarMensagemParaSlack(msg);
     }
 
